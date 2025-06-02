@@ -1,0 +1,25 @@
+name: SINDAN-client
+version: "0.0.1"
+slug: sinden-client
+description: Home Assistant Add-on for SINDAN-client
+arch:
+  - aarch64
+  - amd64
+  - armhf
+  - armv7
+  - i386
+init: false
+host_network: true
+privileged:
+  - NET_ADMIN
+options:
+  url_campaign: http://fluentd.sindan-net.com:8888/sindan.log_campaign
+  url_sindan: http://fluentd.sindan-net.com:8888/sindan.log
+  ssh4_srvs: fluentd.sindan-net.com
+  ssh6_srvs: fluentd.sindan-net.com
+schema:
+  url_campaign: url
+  url_sindan: url
+  ssh4_srvs: str
+  ssh6_srvs: str
+
