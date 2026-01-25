@@ -13,10 +13,15 @@ ALLOWED_CALLER="$(bashio::config 'allowed_caller')"
 ANSWER_CALLS="$(bashio::config 'answer_calls')"
 SEND_MESSAGES="$(bashio::config 'send_messages')"
 
+EXPIRY="600s"
+RETRY="30s"
+
 #
-bashio::log.info "Starting intercom_agent (user=${USERNAME}, proxy=${PROXY}, allowed=${ALLOWED_CALLER}, answer_calls=${ANSWER_CALLS}, send_messages=${SEND_MESSAGES})"
+bashio::log.info "Starting intercom_agent (user=${USERNAME}, proxy=${PROXY}, allowed=${ALLOWED_CALLER}, answer_calls=${ANSWER_CALLS}, send_messages=${SEND_MESSAGES}, expiry={$EXPIRY}, retry={$RETRY})"
 
 exec /usr/local/bin/intercom_agent \
+  -expiry "${EXPIRY}" \
+  -retry "${RETRY}" \
   -username "${USERNAME}" \
   -password "${PASSWORD}" \
   -proxy "${PROXY}" \
