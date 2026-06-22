@@ -18,6 +18,35 @@ You must set:
 ## Notes
 - host_network: must be true
 
+## Home Assistant integration
+
+Add the following REST switch to the Home Assistant
+`/config/configuration.yaml` file:
+
+```yaml
+##########################################################################################
+# Aiphone intercom agent
+##########################################################################################
+switch:
+  - platform: rest
+    name: "Intercom send_messages"
+    resource: "http://127.0.0.1:18080/v1/state"
+    body_on: '{"answer_calls": true, "send_messages": true}'
+    body_off: '{"answer_calls": false, "send_messages": false}'
+    is_on_template: "{{ value_json.answer_calls and value_json.send_messages }}"
+    headers:
+      Content-Type: application/json
+    timeout: 5
+```
+
+If `switch:` is already defined in `configuration.yaml`, append only the
+`- platform: rest` entry under the existing `switch:` section. Do not add a
+second top-level `switch:` key.
+
+Turning the switch on enables both incoming-call answering and SIP MESSAGE
+sending. Turning it off disables both. Restart Home Assistant after changing
+`configuration.yaml`.
+
 ## How to build
 ```
 docker build \
