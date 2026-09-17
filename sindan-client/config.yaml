@@ -1,6 +1,6 @@
 name: SINDAN-client
 version: "0.0.2"
-slug: sinden-client
+slug: sindan-client
 description: Home Assistant Add-on for SINDAN-client
 arch:
   - aarch64
