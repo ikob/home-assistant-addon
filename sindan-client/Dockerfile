@@ -36,4 +36,7 @@ RUN chmod a+x /app/sindan-loop.sh
 ADD sendlog-loop.sh /app/sendlog-loop.sh
 RUN chmod a+x /app/sendlog-loop.sh
 
+ADD sendlog-opensearch-loop.sh /app/sendlog-opensearch-loop.sh
+RUN chmod a+x /app/sendlog-opensearch-loop.sh
+
 CMD [ "/run.sh" ]
