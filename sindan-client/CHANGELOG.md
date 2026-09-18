@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.2
+
+- Add an `os_host` option: the stable observation-point / exporter "instance"
+  label for the OpenSearch push. A fixed Wi-Fi sensor needs a stable id, not the
+  ephemeral container hostname; if empty it falls back to `$(hostname)`.
+- Uploader (`sendlog_opensearch.sh`) no longer emits `campaign` as a label
+  (unbounded per-run cardinality); it stays only in `_id` for idempotency.
+
 ## 0.1.1
 
 - Add a `mode` option: `SINDAN` uploads to the SINDAN server (`sendlog.sh`),

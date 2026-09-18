@@ -1,5 +1,5 @@
 name: SINDAN-client
-version: "0.1.1"
+version: "0.1.2"
 slug: sindan-client
 description: Home Assistant Add-on for SINDAN-client
 arch:
@@ -21,6 +21,7 @@ options:
   ssh6_srvs: fluentd.sindan-net.com
   os_url: https://172.27.160.35/opensearch
   os_index_prefix: sindan-wifi
+  os_host: ""
   os_user: admin
   os_pass: ""
   os_insecure: true
@@ -33,6 +34,7 @@ schema:
   ssh6_srvs: str
   os_url: str
   os_index_prefix: str
+  os_host: "str?"
   os_user: str
   os_pass: "password?"
   os_insecure: bool

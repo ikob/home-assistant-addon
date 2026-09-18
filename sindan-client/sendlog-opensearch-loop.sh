@@ -14,7 +14,14 @@ else
   export OS_INSECURE=no
 fi
 
-bashio::log.info "OpenSearch target: ${OS_URL} (index ${OS_INDEX_PREFIX}-*, insecure=${OS_INSECURE})"
+# Stable observation-point identity (the exporter/Prometheus "instance" label).
+# This is a FIXED Wi-Fi sensor, so it needs a stable id -- NOT the ephemeral
+# container hostname (<hash>-sindan-client), which changes on every rebuild and
+# would break the time series. Set os_host in the add-on options; if left empty
+# sendlog_opensearch.sh falls back to $(hostname).
+export PROM_HOST=$(bashio::config 'os_host')
+
+bashio::log.info "OpenSearch target: ${OS_URL} (index ${OS_INDEX_PREFIX}-*, host=${PROM_HOST:-<hostname>}, insecure=${OS_INSECURE})"
 
 while true
 do
