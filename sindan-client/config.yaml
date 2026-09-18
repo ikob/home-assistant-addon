@@ -1,5 +1,5 @@
 name: SINDAN-client
-version: "0.1.2"
+version: "0.1.3"
 slug: sindan-client
 description: Home Assistant Add-on for SINDAN-client
 arch:

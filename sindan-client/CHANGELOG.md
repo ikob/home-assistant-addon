@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.3
+
+- Install `sudo` in the image so `install.sh` (run at startup) works; it uses
+  `sudo apt` to add the one package not baked into the image (`jq`).
+
 ## 0.1.2
 
 - Add an `os_host` option: the stable observation-point / exporter "instance"
