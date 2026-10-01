@@ -23,6 +23,9 @@ RUN apt-get update && apt-get install -y \
 
 RUN npm install puppeteer-core speedline
 
+# node_exporter serves the Prometheus metrics written by sindan_exporter.sh.
+RUN apt-get update && apt-get install -y --no-install-recommends prometheus-node-exporter
+
 #RUN git clone -b HA-OS https://github.com/ikob/sindan-client.git && \
 #    cd sindan-client/linux && ./install.sh
 
@@ -39,5 +42,8 @@ RUN chmod a+x /app/sendlog-loop.sh
 
 ADD sendlog-opensearch-loop.sh /app/sendlog-opensearch-loop.sh
 RUN chmod a+x /app/sendlog-opensearch-loop.sh
+
+ADD sindan-exporter-loop.sh /app/sindan-exporter-loop.sh
+RUN chmod a+x /app/sindan-exporter-loop.sh
 
 CMD [ "/run.sh" ]

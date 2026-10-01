@@ -1,5 +1,5 @@
 name: SINDAN-client
-version: "0.1.3"
+version: "0.1.4"
 slug: sindan-client
 description: Home Assistant Add-on for SINDAN-client
 arch:
@@ -25,6 +25,9 @@ options:
   os_user: admin
   os_pass: ""
   os_insecure: true
+  exporter: true
+  exporter_port: 9100
+  exporter_interval: 600
 schema:
   mode: "list(SINDAN|perfSONAR)"
   url_campaign: url
@@ -38,3 +41,6 @@ schema:
   os_user: str
   os_pass: "password?"
   os_insecure: bool
+  exporter: bool
+  exporter_port: port
+  exporter_interval: "int(60,)"

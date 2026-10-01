@@ -38,4 +38,9 @@ case "${MODE}" in
     ;;
 esac
 
+# Prometheus exporter for the non-aggressive Wi-Fi measurements (any mode).
+if bashio::config.true 'exporter'; then
+  /app/sindan-exporter-loop.sh &
+fi
+
 tail -f /dev/null

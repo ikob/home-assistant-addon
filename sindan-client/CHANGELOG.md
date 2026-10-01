@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.4
+
+- Add a Prometheus exporter for the Wi-Fi neighbour scan
+  (`sindan_exporter.sh`, served by node_exporter's textfile collector on the
+  host network). Options: `exporter` (on/off), `exporter_port` (default 9100),
+  `exporter_interval` (default 600 s; also the upper bound on how often a real
+  scan is triggered). Runs in either upload mode.
+
 ## 0.1.3
 
 - Install `sudo` in the image so `install.sh` (run at startup) works; it uses
