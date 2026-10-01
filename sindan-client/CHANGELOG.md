@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.5
+
+- `exporter` now defaults to `false`. On a perfSONAR node, run the Wi-Fi
+  exporter in the perfSONAR Testpoint add-on instead (`wifi_exporter`): it is
+  served with perfSONAR's host metrics, and that add-on's node_exporter needs
+  port 9100, which this exporter would otherwise hold. Existing installs keep
+  their saved value; turn it off by hand there.
+
 ## 0.1.4
 
 - Add a Prometheus exporter for the Wi-Fi neighbour scan
