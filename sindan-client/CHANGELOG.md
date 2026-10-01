@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.0
+
+- Drop perfSONAR support: the `mode` option (SINDAN server upload only), the
+  OpenSearch upload (`os_*` options) and the Wi-Fi exporter (`exporter*`
+  options, node_exporter). perfSONAR integration now lives in the perfSONAR
+  Testpoint add-on (`wifi_exporter`), served with perfSONAR's host metrics.
+- The SINDAN client is still fetched from the `opensearch` branch of
+  ikob/sindan-client, which carries the `iw scan` timeout and the
+  `parse_wlan_scan` fixes.
+
 ## 0.1.5
 
 - `exporter` now defaults to `false`. On a perfSONAR node, run the Wi-Fi

@@ -1,13 +1,9 @@
 #!/usr/bin/with-contenv bashio
 
-# Operation mode: "SINDAN" (upload to the SINDAN server) or
-# "perfSONAR" (push to OpenSearch). Set in the add-on options.
-MODE=$(bashio::config 'mode')
-
 export URL_CAMPAIGN=$(bashio::config 'url_campaign')
 export URL_SINDAN=$(bashio::config 'url_sindan')
 
-bashio::log.info "SINDAN add-on starting (mode=${MODE})"
+bashio::log.info "SINDAN add-on starting"
 bashio::log.info "URL_CAMPAIGN=${URL_CAMPAIGN}"
 bashio::log.info "URL_SINDAN=${URL_SINDAN}"
 
@@ -19,28 +15,8 @@ cd sindan-client/linux
 ln -sf /app/sindan.conf /app/sindan-client/linux/sindan.conf
 cd /app
 
-# Always run the measurement loop (it produces log/*.json).
+# Measurement loop (produces log/*.json) and upload to the SINDAN server.
 /app/sindan-loop.sh 1>/dev/null 2>/dev/null &
-
-# The upload path depends on the mode.
-case "${MODE}" in
-  perfSONAR)
-    bashio::log.info "upload target: OpenSearch (perfSONAR)"
-    /app/sendlog-opensearch-loop.sh &
-    ;;
-  SINDAN)
-    bashio::log.info "upload target: SINDAN server"
-    /app/sendlog-loop.sh &
-    ;;
-  *)
-    bashio::log.warning "unknown mode '${MODE}', defaulting to SINDAN server"
-    /app/sendlog-loop.sh &
-    ;;
-esac
-
-# Prometheus exporter for the non-aggressive Wi-Fi measurements (any mode).
-if bashio::config.true 'exporter'; then
-  /app/sindan-exporter-loop.sh &
-fi
+/app/sendlog-loop.sh &
 
 tail -f /dev/null
