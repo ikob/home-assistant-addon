@@ -22,6 +22,9 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 \
 # ---- runtime stage ----
 FROM ${BUILD_FROM}
 
+ARG BUILD_VERSION
+ENV ADDON_VERSION="${BUILD_VERSION}"
+
 RUN apk add --no-cache ca-certificates
 COPY --from=builder /out/intercom_agent /usr/local/bin/intercom_agent
 COPY rootfs/ /

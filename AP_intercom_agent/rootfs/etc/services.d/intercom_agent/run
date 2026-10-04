@@ -1,6 +1,8 @@
 #!/usr/bin/with-contenv bashio
 set -euo pipefail
 
+LAUNCHER_REVISION="caller-json-v1"
+
 USERNAME="$(bashio::config 'username')"
 PASSWORD="$(bashio::config 'password')"
 PROXY="$(bashio::config 'proxy')"
@@ -50,14 +52,32 @@ append_unlock_caller() {
   UNLOCK_CALLERS+=("${caller}")
 }
 
-while IFS= read -r caller || [[ -n "${caller}" ]]; do
+OPTIONS_JSON="$(bashio::app.config)"
+ALLOWED_CALLERS_OPTION_TYPE="$(bashio::jq "${OPTIONS_JSON}" '(.allowed_callers // []) | type')"
+UNLOCK_CALLERS_OPTION_TYPE="$(bashio::jq "${OPTIONS_JSON}" '(.unlock_callers // []) | type')"
+if [[ "${ALLOWED_CALLERS_OPTION_TYPE}" != "array" || "${UNLOCK_CALLERS_OPTION_TYPE}" != "array" ]]; then
+  bashio::log.error "allowed_callers and unlock_callers must be arrays"
+  exit 1
+fi
+
+CONFIG_ALLOWED_CALLER_COUNT="$(bashio::jq "${OPTIONS_JSON}" '(.allowed_callers // []) | length')"
+CONFIG_UNLOCK_CALLER_COUNT="$(bashio::jq "${OPTIONS_JSON}" '(.unlock_callers // []) | length')"
+
+# Read arrays from one options JSON snapshot. Bashio 0.17.5 builds the
+# bashio::config query with `read -d ''`; under `set -e`, calling it from a
+# process substitution can exit before emitting the array. bashio::jq streams
+# newline-terminated values directly and avoids that path entirely.
+while IFS= read -r caller; do
   append_allowed_caller "${caller}"
-done < <(bashio::config 'allowed_callers')
+done < <(bashio::jq "${OPTIONS_JSON}" '(.allowed_callers // [])[]? | select(type == "string" and length > 0)')
 
 # Keep installations upgraded from 0.1.x working. A saved legacy caller stays
 # allowed until the user clears it, but it is never added to unlock_callers.
-if bashio::config.has_value 'allowed_caller'; then
-  append_allowed_caller "$(bashio::config 'allowed_caller')"
+LEGACY_ALLOWED_CALLER="$(bashio::jq "${OPTIONS_JSON}" '(.allowed_caller // "") | select(type == "string")')"
+LEGACY_ALLOWED_CALLER_PRESENT="false"
+if [[ -n "${LEGACY_ALLOWED_CALLER}" ]]; then
+  append_allowed_caller "${LEGACY_ALLOWED_CALLER}"
+  LEGACY_ALLOWED_CALLER_PRESENT="true"
 fi
 
 if (( ${#ALLOWED_CALLERS[@]} == 0 )); then
@@ -65,9 +85,9 @@ if (( ${#ALLOWED_CALLERS[@]} == 0 )); then
   exit 1
 fi
 
-while IFS= read -r caller || [[ -n "${caller}" ]]; do
+while IFS= read -r caller; do
   append_unlock_caller "${caller}"
-done < <(bashio::config 'unlock_callers')
+done < <(bashio::jq "${OPTIONS_JSON}" '(.unlock_callers // [])[]? | select(type == "string" and length > 0)')
 
 mkdir -p "${INCOMING_JPEG_DIR}"
 
@@ -109,6 +129,6 @@ else
   UNLOCK_CALLERS_LOG="(none)"
 fi
 
-bashio::log.info "Starting intercom_agent (user=${USERNAME}, proxy=${PROXY}, allowed=${ALLOWED_CALLERS_LOG}, unlock=${UNLOCK_CALLERS_LOG}, answer_calls=${ANSWER_CALLS}, send_messages=${SEND_MESSAGES}, jpeg_dir=${INCOMING_JPEG_DIR}, jpeg_max_files=${INCOMING_JPEG_MAX_FILES}, log_level=${LOG_LEVEL}, expiry=${EXPIRY}, retry=${RETRY})"
+bashio::log.info "Starting intercom_agent (addon_version=${ADDON_VERSION:-unknown}, launcher=${LAUNCHER_REVISION}, user=${USERNAME}, proxy=${PROXY}, config_allowed_count=${CONFIG_ALLOWED_CALLER_COUNT}, config_unlock_count=${CONFIG_UNLOCK_CALLER_COUNT}, legacy_allowed=${LEGACY_ALLOWED_CALLER_PRESENT}, allowed=${ALLOWED_CALLERS_LOG}, unlock=${UNLOCK_CALLERS_LOG}, answer_calls=${ANSWER_CALLS}, send_messages=${SEND_MESSAGES}, jpeg_dir=${INCOMING_JPEG_DIR}, jpeg_max_files=${INCOMING_JPEG_MAX_FILES}, log_level=${LOG_LEVEL}, expiry=${EXPIRY}, retry=${RETRY})"
 
 exec /usr/local/bin/intercom_agent "${ARGS[@]}"
