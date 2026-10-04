@@ -52,28 +52,33 @@ append_unlock_caller() {
   UNLOCK_CALLERS+=("${caller}")
 }
 
-OPTIONS_JSON="$(bashio::app.config)"
-ALLOWED_CALLERS_OPTION_TYPE="$(bashio::jq "${OPTIONS_JSON}" '(.allowed_callers // []) | type')"
-UNLOCK_CALLERS_OPTION_TYPE="$(bashio::jq "${OPTIONS_JSON}" '(.unlock_callers // []) | type')"
+OPTIONS_PATH="${OPTIONS_PATH:-/data/options.json}"
+if [[ ! -r "${OPTIONS_PATH}" ]]; then
+  bashio::log.error "Cannot read add-on options: ${OPTIONS_PATH}"
+  exit 1
+fi
+
+ALLOWED_CALLERS_OPTION_TYPE="$(jq --raw-output '(.allowed_callers // []) | type' "${OPTIONS_PATH}")"
+UNLOCK_CALLERS_OPTION_TYPE="$(jq --raw-output '(.unlock_callers // []) | type' "${OPTIONS_PATH}")"
 if [[ "${ALLOWED_CALLERS_OPTION_TYPE}" != "array" || "${UNLOCK_CALLERS_OPTION_TYPE}" != "array" ]]; then
   bashio::log.error "allowed_callers and unlock_callers must be arrays"
   exit 1
 fi
 
-CONFIG_ALLOWED_CALLER_COUNT="$(bashio::jq "${OPTIONS_JSON}" '(.allowed_callers // []) | length')"
-CONFIG_UNLOCK_CALLER_COUNT="$(bashio::jq "${OPTIONS_JSON}" '(.unlock_callers // []) | length')"
+CONFIG_ALLOWED_CALLER_COUNT="$(jq --raw-output '(.allowed_callers // []) | length' "${OPTIONS_PATH}")"
+CONFIG_UNLOCK_CALLER_COUNT="$(jq --raw-output '(.unlock_callers // []) | length' "${OPTIONS_PATH}")"
 
 # Read arrays from one options JSON snapshot. Bashio 0.17.5 builds the
 # bashio::config query with `read -d ''`; under `set -e`, calling it from a
-# process substitution can exit before emitting the array. bashio::jq streams
-# newline-terminated values directly and avoids that path entirely.
+# process substitution can exit before emitting the array. Reading the official
+# /data/options.json file with jq avoids that path entirely.
 while IFS= read -r caller; do
   append_allowed_caller "${caller}"
-done < <(bashio::jq "${OPTIONS_JSON}" '(.allowed_callers // [])[]? | select(type == "string" and length > 0)')
+done < <(jq --raw-output '(.allowed_callers // [])[]? | select(type == "string" and length > 0)' "${OPTIONS_PATH}")
 
 # Keep installations upgraded from 0.1.x working. A saved legacy caller stays
 # allowed until the user clears it, but it is never added to unlock_callers.
-LEGACY_ALLOWED_CALLER="$(bashio::jq "${OPTIONS_JSON}" '(.allowed_caller // "") | select(type == "string")')"
+LEGACY_ALLOWED_CALLER="$(jq --raw-output '(.allowed_caller // "") | select(type == "string")' "${OPTIONS_PATH}")"
 LEGACY_ALLOWED_CALLER_PRESENT="false"
 if [[ -n "${LEGACY_ALLOWED_CALLER}" ]]; then
   append_allowed_caller "${LEGACY_ALLOWED_CALLER}"
@@ -87,7 +92,7 @@ fi
 
 while IFS= read -r caller; do
   append_unlock_caller "${caller}"
-done < <(bashio::jq "${OPTIONS_JSON}" '(.unlock_callers // [])[]? | select(type == "string" and length > 0)')
+done < <(jq --raw-output '(.unlock_callers // [])[]? | select(type == "string" and length > 0)' "${OPTIONS_PATH}")
 
 mkdir -p "${INCOMING_JPEG_DIR}"
 
