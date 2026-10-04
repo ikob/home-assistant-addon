@@ -26,10 +26,3 @@ Provides SIP registration, message handling, and incoming-call control for
 compatible apartment intercom systems.
 
 See [AP Intercom Agent documentation](./AP_intercom_agent/README.md).
-
-## License
-
-Files authored for this repository are licensed under the
-[Apache License 2.0](./LICENSE). The SINDAN client and other third-party
-components or assets retain their respective licenses; the SINDAN client is
-distributed under the BSD 3-Clause License.

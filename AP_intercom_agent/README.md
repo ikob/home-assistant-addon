@@ -142,5 +142,5 @@ docker run --rm --net=host \
 ## License
 
 The add-on files are licensed under the
-[Apache License 2.0](../LICENSE). The packaged agent and all third-party
+[Apache License 2.0](./LICENSE). The packaged agent and all third-party
 components retain their respective licenses.
