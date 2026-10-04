@@ -7,7 +7,9 @@ PROXY="$(bashio::config 'proxy')"
 REGISTER_URI="$(bashio::config 'register_uri')"
 MESSAGE_URI="$(bashio::config 'message_uri')"
 ENTRANCE_URI="$(bashio::config 'entrance_uri')"
-ALLOWED_CALLER="$(bashio::config 'allowed_caller')"
+JPEG_QUERY_S="$(bashio::config 'jpeg_query_s')"
+INCOMING_JPEG_MAX_FILES="$(bashio::config 'incoming_jpeg_max_files')"
+INCOMING_JPEG_DIR="/media/ap_intercom_agent"
 
 ANSWER_CALLS="$(bashio::config 'answer_calls')"
 SEND_MESSAGES="$(bashio::config 'send_messages')"
@@ -21,18 +23,92 @@ if bashio::config.true 'debug'; then
   LOG_LEVEL="debug"
 fi
 
-bashio::log.info "Starting intercom_agent (user=${USERNAME}, proxy=${PROXY}, allowed=${ALLOWED_CALLER}, answer_calls=${ANSWER_CALLS}, send_messages=${SEND_MESSAGES}, log_level=${LOG_LEVEL}, expiry=${EXPIRY}, retry=${RETRY})"
+declare -a ALLOWED_CALLERS=()
+declare -a UNLOCK_CALLERS=()
 
-exec /usr/local/bin/intercom_agent \
-  -expiry "${EXPIRY}" \
-  -retry "${RETRY}" \
-  -username "${USERNAME}" \
-  -password "${PASSWORD}" \
-  -proxy "${PROXY}" \
-  -allowed-caller "${ALLOWED_CALLER}" \
-  -register-uri "${REGISTER_URI}" \
-  -message-uri "${MESSAGE_URI}" \
-  -entrance-uri "${ENTRANCE_URI}" \
-  -answer-calls="${ANSWER_CALLS}" \
-  -send-messages="${SEND_MESSAGES}" \
+append_allowed_caller() {
+  local caller="$1"
+  [[ -n "${caller}" ]] || return 0
+  local existing
+  if (( ${#ALLOWED_CALLERS[@]} > 0 )); then
+    for existing in "${ALLOWED_CALLERS[@]}"; do
+      [[ "${existing}" != "${caller}" ]] || return 0
+    done
+  fi
+  ALLOWED_CALLERS+=("${caller}")
+}
+
+append_unlock_caller() {
+  local caller="$1"
+  [[ -n "${caller}" ]] || return 0
+  local existing
+  if (( ${#UNLOCK_CALLERS[@]} > 0 )); then
+    for existing in "${UNLOCK_CALLERS[@]}"; do
+      [[ "${existing}" != "${caller}" ]] || return 0
+    done
+  fi
+  UNLOCK_CALLERS+=("${caller}")
+}
+
+while IFS= read -r caller || [[ -n "${caller}" ]]; do
+  append_allowed_caller "${caller}"
+done < <(bashio::config 'allowed_callers')
+
+# Keep installations upgraded from 0.1.x working. A saved legacy caller stays
+# allowed until the user clears it, but it is never added to unlock_callers.
+if bashio::config.has_value 'allowed_caller'; then
+  append_allowed_caller "$(bashio::config 'allowed_caller')"
+fi
+
+if (( ${#ALLOWED_CALLERS[@]} == 0 )); then
+  bashio::log.error "At least one non-empty allowed_callers entry is required"
+  exit 1
+fi
+
+while IFS= read -r caller || [[ -n "${caller}" ]]; do
+  append_unlock_caller "${caller}"
+done < <(bashio::config 'unlock_callers')
+
+mkdir -p "${INCOMING_JPEG_DIR}"
+
+ARGS=(
+  -expiry "${EXPIRY}"
+  -retry "${RETRY}"
+  -username "${USERNAME}"
+  -password "${PASSWORD}"
+  -proxy "${PROXY}"
+  -register-uri "${REGISTER_URI}"
+  -message-uri "${MESSAGE_URI}"
+  -entrance-uri "${ENTRANCE_URI}"
+  -answer-calls="${ANSWER_CALLS}"
+  -send-messages="${SEND_MESSAGES}"
+  -reject-code 486
+  -reject-reason "Busy Here"
   -log-level="${LOG_LEVEL}"
+  -jpeg-query-s "${JPEG_QUERY_S}"
+  -incoming-jpeg-dir "${INCOMING_JPEG_DIR}"
+  -incoming-jpeg-max-files "${INCOMING_JPEG_MAX_FILES}"
+  -unlock-caller=
+)
+
+if (( ${#ALLOWED_CALLERS[@]} > 0 )); then
+  for caller in "${ALLOWED_CALLERS[@]}"; do
+    ARGS+=(-allowed-caller "${caller}")
+  done
+  ALLOWED_CALLERS_LOG="$(IFS=,; echo "${ALLOWED_CALLERS[*]}")"
+else
+  ALLOWED_CALLERS_LOG="(none)"
+fi
+
+if (( ${#UNLOCK_CALLERS[@]} > 0 )); then
+  for caller in "${UNLOCK_CALLERS[@]}"; do
+    ARGS+=(-unlock-caller "${caller}")
+  done
+  UNLOCK_CALLERS_LOG="$(IFS=,; echo "${UNLOCK_CALLERS[*]}")"
+else
+  UNLOCK_CALLERS_LOG="(none)"
+fi
+
+bashio::log.info "Starting intercom_agent (user=${USERNAME}, proxy=${PROXY}, allowed=${ALLOWED_CALLERS_LOG}, unlock=${UNLOCK_CALLERS_LOG}, answer_calls=${ANSWER_CALLS}, send_messages=${SEND_MESSAGES}, jpeg_dir=${INCOMING_JPEG_DIR}, jpeg_max_files=${INCOMING_JPEG_MAX_FILES}, log_level=${LOG_LEVEL}, expiry=${EXPIRY}, retry=${RETRY})"
+
+exec /usr/local/bin/intercom_agent "${ARGS[@]}"

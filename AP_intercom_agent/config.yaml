@@ -1,7 +1,7 @@
 name: "AP Intercom Agent"
 slug: ap_intercom_agent
 description: "SIP agent for intercom control."
-version: "0.1.3"
+version: "0.2.0"
 arch:
   - aarch64
 url: "https://github.com/ikob/AP_intercom_agent"
@@ -9,6 +9,9 @@ startup: services
 boot: auto
 host_network: true
 init: false
+map:
+  - type: media
+    read_only: false
 
 options:
   username: "cellphone0"
@@ -17,7 +20,13 @@ options:
   register_uri: null
   message_uri: null
   entrance_uri: null
-  allowed_caller: "interphone0"
+  allowed_callers:
+    - "interphone0"
+    - "interphone1"
+  unlock_callers:
+    - "interphone0"
+  jpeg_query_s: "cd188d8e518cb12ad7a644f23928f64f"
+  incoming_jpeg_max_files: 100
   answer_calls: false
   send_messages: true
   debug: false
@@ -29,7 +38,13 @@ schema:
   register_uri: str
   message_uri: str
   entrance_uri: str
-  allowed_caller: str
+  allowed_caller: str?
+  allowed_callers:
+    - "str(1,)"
+  unlock_callers:
+    - "str(1,)"
+  jpeg_query_s: "str(1,)"
+  incoming_jpeg_max_files: "int(1,)"
   answer_calls: bool
   send_messages: bool
   debug: bool
