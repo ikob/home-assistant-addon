@@ -31,8 +31,9 @@ list and any legacy setting are empty.
 unlocked. An empty `unlock_callers` list disables automatic unlocking while
 still allowing configured callers and ring-image capture.
 
-`jpeg_query_s` is the IFBOX HTTP query token. Its default is the value observed
-with the current intercom, but it can be changed from the add-on configuration.
+For instructions on obtaining `jpeg_query_s`, see
+[`Finding jpeg_query_s`](https://github.com/ikob/AP_intercom_agent#finding-jpeg_query_s)
+in the AP Intercom Agent documentation.
 `incoming_jpeg_max_files` limits retained ring images and defaults to 100. The
 oldest image is removed when the limit is exceeded.
 
