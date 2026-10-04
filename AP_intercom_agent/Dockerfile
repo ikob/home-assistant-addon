@@ -1,4 +1,6 @@
 # syntax=docker/dockerfile:1
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright (c) 2026, Katsushi Kobayashi
 
 ARG BUILD_FROM=ghcr.io/home-assistant/aarch64-base:latest
 

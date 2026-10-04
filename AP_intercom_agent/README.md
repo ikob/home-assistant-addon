@@ -2,7 +2,7 @@
 
 # Description
 Register with the Aiphone SIP service, automatically unlock configured
-entrances, and save a JPEG from each incoming ring while automatic unlock is
+entrances, and save a JPEG from each incoming ring while `send_messages` is
 enabled.
 
 ## Configuration
@@ -15,6 +15,10 @@ Set these installation-specific options:
 - register_uri
 - message_uri
 - entrance_uri
+
+The add-on reads `password` from Home Assistant's add-on configuration and
+passes it directly to the agent. The core agent's local-development `.env` and
+`AP_INTERCOM_PASSWORD` mechanism is not used inside the add-on.
 
 The remaining options have defaults. `allowed_callers` defaults to
 `interphone0` (the external/internal entrances) and `interphone1` (the
@@ -46,6 +50,8 @@ example:
 ```text
 20261004T214123.123456789+0900_interphone0.jpg
 ```
+
+Browse them from **Media > My media > ap_intercom_agent** in Home Assistant.
 
 Only these timestamped ring images are subject to
 `incoming_jpeg_max_files`; unrelated files are not removed. The directory is
@@ -79,8 +85,8 @@ switch:
   - platform: rest
     name: "Intercom send_messages"
     resource: "http://127.0.0.1:18080/v1/state"
-    body_on: '{"answer_calls": false, "send_messages": true}'
-    body_off: '{"answer_calls": false, "send_messages": false}'
+    body_on: '{"send_messages": true}'
+    body_off: '{"send_messages": false}'
     is_on_template: "{{ value_json.send_messages }}"
     headers:
       Content-Type: application/json
@@ -91,12 +97,14 @@ If `switch:` is already defined in `configuration.yaml`, append only the
 `- platform: rest` entry under the existing `switch:` section. Do not add a
 second top-level `switch:` key.
 
-For unlock-only operation, answering the incoming SIP call is not required.
-Turning the switch on enables SIP MESSAGE sending while keeping
-`answer_calls` disabled, avoiding an established call that would need to be
-torn down. Turning it off disables MESSAGE sending. Set `answer_calls` to
-`true` only if incoming-call answering is explicitly needed. Restart Home
-Assistant after changing `configuration.yaml`.
+The REST request intentionally changes only `send_messages`; it preserves the
+`answer_calls` value selected in the add-on configuration. With
+`answer_calls=true`, the agent captures the JPEG, answers the SIP call, waits
+approximately one second, and sends BYE. This avoids the Busy/congestion result
+observed with the tested intercom. With `answer_calls=false`, it captures the
+JPEG and sends the configured final rejection instead, which the caller may
+display as Busy or congestion. Restart Home Assistant after changing
+`configuration.yaml`.
 
 ## How to build
 ```
@@ -125,8 +133,14 @@ docker run --rm --net=host \
   -e JPEG_QUERY_S=cd188d8e518cb12ad7a644f23928f64f \
   -e INCOMING_JPEG_DIR=/media/ap_intercom_agent \
   -e INCOMING_JPEG_MAX_FILES=100 \
-  -e ANSWER_CALLS=false \
+  -e ANSWER_CALLS=true \
   -e SEND_MESSAGES=true \
   --entrypoint /usr/local/bin/run-test.sh \
   ap_intercom_agent:dev
 ```
+
+## License
+
+The add-on files are licensed under the
+[Apache License 2.0](../LICENSE). The packaged agent and all third-party
+components retain their respective licenses.

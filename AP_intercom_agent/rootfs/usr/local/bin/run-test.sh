@@ -1,4 +1,6 @@
 #!/usr/bin/with-contenv bash
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright (c) 2026, Katsushi Kobayashi
 set -euo pipefail
 
 : "${SIP_USERNAME:?}"
