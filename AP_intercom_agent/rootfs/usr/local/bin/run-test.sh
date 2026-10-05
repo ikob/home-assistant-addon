@@ -10,6 +10,7 @@ set -euo pipefail
 : "${MESSAGE_URI:?}"
 : "${ENTRANCE_URI:?}"
 : "${ANSWER_CALLS:?}"
+: "${CAPTURE_IMAGES:?}"
 : "${SEND_MESSAGES:?}"
 
 ALLOWED_CALLERS="${ALLOWED_CALLERS-interphone0,interphone1}"
@@ -31,6 +32,7 @@ ARGS=(
   -message-uri "${MESSAGE_URI}"
   -entrance-uri "${ENTRANCE_URI}"
   -answer-calls="${ANSWER_CALLS}"
+  -capture-images="${CAPTURE_IMAGES}"
   -send-messages="${SEND_MESSAGES}"
   -reject-code 486
   -reject-reason "Busy Here"

@@ -2,4 +2,4 @@ build_from:
   aarch64: ghcr.io/home-assistant/aarch64-base:latest
 args:
   REPO_URL: "https://github.com/ikob/AP_intercom_agent.git"
-  REPO_REF: "main"
+  REPO_REF: "1356848fd9cf0378ef7a98dfc9f6b8e1482f5279"

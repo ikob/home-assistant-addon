@@ -22,7 +22,7 @@ See [SINDAN Client documentation](./sindan-client/README.md).
 
 ### AP Intercom Agent
 
-Provides SIP registration, message handling, and incoming-call control for
-compatible apartment intercom systems.
+Saves timestamped JPEG snapshots from incoming calls on compatible AIPHONE
+intercom systems.
 
 See [AP Intercom Agent documentation](./AP_intercom_agent/README.md).

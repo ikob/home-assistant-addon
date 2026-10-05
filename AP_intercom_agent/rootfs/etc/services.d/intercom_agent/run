@@ -3,7 +3,7 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026, Katsushi Kobayashi
 set -euo pipefail
 
-LAUNCHER_REVISION="caller-json-v1"
+LAUNCHER_REVISION="capture-images-v1"
 
 USERNAME="$(bashio::config 'username')"
 PASSWORD="$(bashio::config 'password')"
@@ -16,6 +16,7 @@ INCOMING_JPEG_MAX_FILES="$(bashio::config 'incoming_jpeg_max_files')"
 INCOMING_JPEG_DIR="/media/ap_intercom_agent"
 
 ANSWER_CALLS="$(bashio::config 'answer_calls')"
+CAPTURE_IMAGES="$(bashio::config 'capture_images')"
 SEND_MESSAGES="$(bashio::config 'send_messages')"
 DEBUG="$(bashio::config 'debug')"
 
@@ -108,6 +109,7 @@ ARGS=(
   -message-uri "${MESSAGE_URI}"
   -entrance-uri "${ENTRANCE_URI}"
   -answer-calls="${ANSWER_CALLS}"
+  -capture-images="${CAPTURE_IMAGES}"
   -send-messages="${SEND_MESSAGES}"
   -reject-code 486
   -reject-reason "Busy Here"
@@ -136,6 +138,6 @@ else
   UNLOCK_CALLERS_LOG="(none)"
 fi
 
-bashio::log.info "Starting intercom_agent (addon_version=${ADDON_VERSION:-unknown}, launcher=${LAUNCHER_REVISION}, user=${USERNAME}, proxy=${PROXY}, config_allowed_count=${CONFIG_ALLOWED_CALLER_COUNT}, config_unlock_count=${CONFIG_UNLOCK_CALLER_COUNT}, legacy_allowed=${LEGACY_ALLOWED_CALLER_PRESENT}, allowed=${ALLOWED_CALLERS_LOG}, unlock=${UNLOCK_CALLERS_LOG}, answer_calls=${ANSWER_CALLS}, send_messages=${SEND_MESSAGES}, jpeg_dir=${INCOMING_JPEG_DIR}, jpeg_max_files=${INCOMING_JPEG_MAX_FILES}, log_level=${LOG_LEVEL}, expiry=${EXPIRY}, retry=${RETRY})"
+bashio::log.info "Starting intercom_agent (addon_version=${ADDON_VERSION:-unknown}, launcher=${LAUNCHER_REVISION}, user=${USERNAME}, proxy=${PROXY}, config_allowed_count=${CONFIG_ALLOWED_CALLER_COUNT}, config_unlock_count=${CONFIG_UNLOCK_CALLER_COUNT}, legacy_allowed=${LEGACY_ALLOWED_CALLER_PRESENT}, allowed=${ALLOWED_CALLERS_LOG}, unlock=${UNLOCK_CALLERS_LOG}, answer_calls=${ANSWER_CALLS}, capture_images=${CAPTURE_IMAGES}, send_messages=${SEND_MESSAGES}, jpeg_dir=${INCOMING_JPEG_DIR}, jpeg_max_files=${INCOMING_JPEG_MAX_FILES}, log_level=${LOG_LEVEL}, expiry=${EXPIRY}, retry=${RETRY})"
 
 exec /usr/local/bin/intercom_agent "${ARGS[@]}"

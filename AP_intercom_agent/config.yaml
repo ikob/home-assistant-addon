@@ -1,7 +1,7 @@
 name: "AP Intercom Agent"
 slug: ap_intercom_agent
-description: "SIP agent for intercom control."
-version: "0.2.3"
+description: "Saves JPEG snapshots from incoming AIPHONE intercom calls."
+version: "0.2.4"
 arch:
   - aarch64
 url: "https://github.com/ikob/AP_intercom_agent"
@@ -28,7 +28,8 @@ options:
   jpeg_query_s: "cd188d8e518cb12ad7a644f23928f64f"
   incoming_jpeg_max_files: 100
   answer_calls: false
-  send_messages: true
+  capture_images: true
+  send_messages: false
   debug: false
 
 schema:
@@ -46,5 +47,6 @@ schema:
   jpeg_query_s: "str(1,)"
   incoming_jpeg_max_files: "int(1,)"
   answer_calls: bool
+  capture_images: bool
   send_messages: bool
   debug: bool

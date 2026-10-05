@@ -14,9 +14,11 @@ ARG BUILD_VERSION
 RUN echo "Build version: ${BUILD_VERSION}"
 
 ARG REPO_URL=https://github.com/ikob/AP_intercom_agent.git
-ARG REPO_REF=main
+ARG REPO_REF=1356848fd9cf0378ef7a98dfc9f6b8e1482f5279
 
-RUN git clone --depth 1 --branch "${REPO_REF}" "${REPO_URL}" .
+RUN git clone "${REPO_URL}" . \
+ && git checkout --detach "${REPO_REF}" \
+ && test "$(git rev-parse HEAD)" = "${REPO_REF}"
 RUN go mod download
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 \
     go build -trimpath -ldflags="-s -w" -o /out/intercom_agent .
