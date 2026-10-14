@@ -3,7 +3,8 @@
 ## Description
 Register with an AIPHONE intercom SIP service and save a timestamped JPEG
 snapshot from each incoming ring. Optional automatic unlocking is controlled
-separately and is disabled by default.
+separately and is disabled by default. The add-on also exposes an on-demand
+MJPEG camera for Home Assistant.
 
 ## Configuration
 
@@ -48,6 +49,11 @@ entrance.
 an add-on configuration option, defaults to `false`, and is independent of both
 image capture and automatic unlocking.
 
+`ring_webhook_url` is optional. Set it to a Home Assistant webhook URL to
+expose allowed incoming calls as a standard doorbell event entity. The option
+is masked in the add-on UI because the webhook ID is an authentication secret.
+The complete URL is never printed in the add-on startup log.
+
 ## Notes
 - host_network: must be true
 
@@ -90,7 +96,57 @@ The new `capture_images` option is enabled by default during an upgrade, while
 the saved `send_messages` value remains the automatic-unlock setting. Review
 both settings after upgrading.
 
+Version 0.3.0 adds an on-demand camera. Accessing its snapshot or MJPEG URL
+starts one shared SIP monitor session. The session sends BYE 15 seconds after
+the last snapshot request or MJPEG client disconnects.
+
+Version 0.3.1 adds the optional `ring_webhook_url`. Existing installations keep
+it disabled until a webhook URL is configured; call answering, image capture,
+and automatic unlocking are unchanged.
+
 ## Home Assistant integration
+
+### Doorbell event
+
+Generate a long random webhook ID and store it in Home Assistant's
+`/config/secrets.yaml`:
+
+```yaml
+aiphone_intercom_webhook_id: "REPLACE_WITH_A_LONG_RANDOM_VALUE"
+```
+
+Add a trigger-based Template Event to `/config/configuration.yaml`:
+
+```yaml
+template:
+  - triggers:
+      - trigger: webhook
+        webhook_id: !secret aiphone_intercom_webhook_id
+        allowed_methods:
+          - POST
+        local_only: true
+    event:
+      - name: "AIPHONE Intercom Doorbell"
+        unique_id: aiphone_intercom_doorbell
+        device_class: doorbell
+        event_type: ring
+        event_types: "{{ ['ring'] }}"
+```
+
+Set the add-on's `ring_webhook_url` to the matching local URL, for example:
+
+```text
+http://127.0.0.1:8123/api/webhook/REPLACE_WITH_A_LONG_RANDOM_VALUE
+```
+
+Adjust the address and port if Home Assistant does not listen on port 8123.
+After reloading the Template integration or restarting Home Assistant, allowed
+SIP callers produce `ring` events on `event.aiphone_intercom_doorbell`. Ring
+notification is independent of image capture, call answering, and automatic
+unlocking. Keep `local_only: true` and treat the complete webhook URL as a
+secret.
+
+### Runtime switches
 
 Add the following REST switches to the Home Assistant
 `/config/configuration.yaml` file:
@@ -134,12 +190,43 @@ rejection instead, which the caller may display as Busy or congestion. JPEG
 capture is independently controlled by `capture_images`. Restart Home
 Assistant after changing `configuration.yaml`.
 
+### Camera
+
+In Home Assistant, go to **Settings > Devices & services > Add Integration**
+and select **MJPEG IP Camera**. Configure it with:
+
+- MJPEG URL: `http://127.0.0.1:18080/v1/camera.mjpeg`
+- Still Image URL: `http://127.0.0.1:18080/v1/camera.jpg`
+- Username and password: leave empty
+- Verify SSL: disabled
+
+Use the dedicated **MJPEG IP Camera** integration, not the Generic Camera
+integration's Stream Source field. This endpoint is HTTP MJPEG; Home Assistant
+does not automatically turn it into an RTSP, HLS, or WebRTC source.
+
+The first request returns a valid black placeholder while the SIP monitor
+dialog starts. Live 640x480 JPEG frames normally replace it after about two
+seconds. Frames are fetched twice per second, so the result looks more like a
+sequence of still images than smooth video. Concurrent Home Assistant requests
+share the same dialog. Leave **Preload stream** disabled unless the monitor
+should remain active continuously.
+
+This version provides a video-only image monitor and an optional standard
+doorbell event entity, but it is not a complete Home Assistant intercom. It
+does not expose audio, two-way talk, or native WebRTC. On-demand monitoring has
+been verified with real hardware;
+publishing incoming-ring frames to the live MJPEG source still requires
+end-to-end hardware validation.
+
+The URLs are intentionally bound to loopback and have no HTTP authentication.
+Do not expose port 18080 outside the Home Assistant host.
+
 ## How to build
 ```
 docker build \
   --build-arg BUILD_FROM=ghcr.io/home-assistant/aarch64-base:latest \
   --build-arg REPO_URL=https://github.com/ikob/AP_intercom_agent.git \
-  --build-arg REPO_REF=1356848fd9cf0378ef7a98dfc9f6b8e1482f5279 \
+  --build-arg REPO_REF=23fcb20ffd9dc2e19a5e64f6c1001bfbd9728341 \
   -t ap_intercom_agent:dev .
 
 ```

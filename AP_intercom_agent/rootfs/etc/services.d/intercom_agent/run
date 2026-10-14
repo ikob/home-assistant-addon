@@ -3,7 +3,7 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026, Katsushi Kobayashi
 set -euo pipefail
 
-LAUNCHER_REVISION="capture-images-v1"
+LAUNCHER_REVISION="ring-webhook-v1"
 
 USERNAME="$(bashio::config 'username')"
 PASSWORD="$(bashio::config 'password')"
@@ -19,6 +19,7 @@ ANSWER_CALLS="$(bashio::config 'answer_calls')"
 CAPTURE_IMAGES="$(bashio::config 'capture_images')"
 SEND_MESSAGES="$(bashio::config 'send_messages')"
 DEBUG="$(bashio::config 'debug')"
+RING_WEBHOOK_URL="$(bashio::config 'ring_webhook_url')"
 
 EXPIRY="600s"
 RETRY="30s"
@@ -138,6 +139,12 @@ else
   UNLOCK_CALLERS_LOG="(none)"
 fi
 
-bashio::log.info "Starting intercom_agent (addon_version=${ADDON_VERSION:-unknown}, launcher=${LAUNCHER_REVISION}, user=${USERNAME}, proxy=${PROXY}, config_allowed_count=${CONFIG_ALLOWED_CALLER_COUNT}, config_unlock_count=${CONFIG_UNLOCK_CALLER_COUNT}, legacy_allowed=${LEGACY_ALLOWED_CALLER_PRESENT}, allowed=${ALLOWED_CALLERS_LOG}, unlock=${UNLOCK_CALLERS_LOG}, answer_calls=${ANSWER_CALLS}, capture_images=${CAPTURE_IMAGES}, send_messages=${SEND_MESSAGES}, jpeg_dir=${INCOMING_JPEG_DIR}, jpeg_max_files=${INCOMING_JPEG_MAX_FILES}, log_level=${LOG_LEVEL}, expiry=${EXPIRY}, retry=${RETRY})"
+RING_WEBHOOK_CONFIGURED="false"
+if [[ -n "${RING_WEBHOOK_URL}" ]]; then
+  export AP_INTERCOM_RING_WEBHOOK_URL="${RING_WEBHOOK_URL}"
+  RING_WEBHOOK_CONFIGURED="true"
+fi
+
+bashio::log.info "Starting intercom_agent (addon_version=${ADDON_VERSION:-unknown}, launcher=${LAUNCHER_REVISION}, user=${USERNAME}, proxy=${PROXY}, config_allowed_count=${CONFIG_ALLOWED_CALLER_COUNT}, config_unlock_count=${CONFIG_UNLOCK_CALLER_COUNT}, legacy_allowed=${LEGACY_ALLOWED_CALLER_PRESENT}, allowed=${ALLOWED_CALLERS_LOG}, unlock=${UNLOCK_CALLERS_LOG}, answer_calls=${ANSWER_CALLS}, capture_images=${CAPTURE_IMAGES}, send_messages=${SEND_MESSAGES}, ring_webhook_configured=${RING_WEBHOOK_CONFIGURED}, jpeg_dir=${INCOMING_JPEG_DIR}, jpeg_max_files=${INCOMING_JPEG_MAX_FILES}, log_level=${LOG_LEVEL}, expiry=${EXPIRY}, retry=${RETRY})"
 
 exec /usr/local/bin/intercom_agent "${ARGS[@]}"
