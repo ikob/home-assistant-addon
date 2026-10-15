@@ -22,7 +22,7 @@ See [SINDAN Client documentation](./sindan-client/README.md).
 
 ### AP Intercom Agent
 
-Saves timestamped JPEG snapshots from incoming calls and provides an on-demand
-MJPEG camera for compatible AIPHONE intercom systems.
+Saves timestamped JPEG snapshots from incoming calls and provides on-demand
+MJPEG and H.264 RTSP cameras for compatible AIPHONE intercom systems.
 
 See [AP Intercom Agent documentation](./AP_intercom_agent/README.md).

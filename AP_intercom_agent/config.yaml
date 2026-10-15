@@ -1,7 +1,7 @@
 name: "AP Intercom Agent"
 slug: ap_intercom_agent
-description: "Saves ring snapshots, emits doorbell events, and provides an on-demand AIPHONE camera."
-version: "0.3.1"
+description: "Saves ring snapshots, emits doorbell events, and provides an on-demand AIPHONE RTSP camera."
+version: "0.3.2"
 arch:
   - aarch64
 url: "https://github.com/ikob/AP_intercom_agent"

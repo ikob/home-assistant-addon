@@ -1,0 +1,7 @@
+#!/usr/bin/with-contenv bashio
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright (c) 2026, Katsushi Kobayashi
+set -euo pipefail
+
+bashio::log.info "Starting go2rtc RTSP bridge (config=/etc/go2rtc.yaml)"
+exec /usr/local/bin/go2rtc -config /etc/go2rtc.yaml

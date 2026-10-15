@@ -3,8 +3,8 @@
 ## Description
 Register with an AIPHONE intercom SIP service and save a timestamped JPEG
 snapshot from each incoming ring. Optional automatic unlocking is controlled
-separately and is disabled by default. The add-on also exposes an on-demand
-MJPEG camera for Home Assistant.
+separately and is disabled by default. The add-on also exposes on-demand MJPEG
+and H.264 RTSP cameras for Home Assistant.
 
 ## Configuration
 
@@ -104,6 +104,11 @@ Version 0.3.1 adds the optional `ring_webhook_url`. Existing installations keep
 it disabled until a webhook URL is configured; call answering, image capture,
 and automatic unlocking are unchanged.
 
+Version 0.3.2 packages FFmpeg and go2rtc with the add-on. It converts the
+agent's two-frame-per-second MJPEG source to H.264 RTSP on demand for Home
+Assistant Generic Camera. Existing SIP, image-capture, webhook, and unlock
+settings are unchanged.
+
 ## Home Assistant integration
 
 ### Doorbell event
@@ -192,24 +197,36 @@ Assistant after changing `configuration.yaml`.
 
 ### Camera
 
-In Home Assistant, go to **Settings > Devices & services > Add Integration**
-and select **MJPEG IP Camera**. Configure it with:
+The add-on serves both the agent's HTTP camera and an H.264 RTSP bridge:
 
-- MJPEG URL: `http://127.0.0.1:18080/v1/camera.mjpeg`
+- Snapshot: `http://127.0.0.1:18080/v1/camera.jpg`
+- MJPEG: `http://127.0.0.1:18080/v1/camera.mjpeg`
+- H.264 RTSP: `rtsp://127.0.0.1:8554/intercom`
+
+For a normal Home Assistant stream, add the **Generic Camera** integration and
+configure:
+
 - Still Image URL: `http://127.0.0.1:18080/v1/camera.jpg`
+- Stream Source URL: `rtsp://127.0.0.1:8554/intercom`
+- RTSP transport: TCP
 - Username and password: leave empty
 - Verify SSL: disabled
 
-Use the dedicated **MJPEG IP Camera** integration, not the Generic Camera
-integration's Stream Source field. This endpoint is HTTP MJPEG; Home Assistant
-does not automatically turn it into an RTSP, HLS, or WebRTC source.
+The bundled go2rtc and FFmpeg processes convert HTTP MJPEG to H.264 only while
+an RTSP viewer is connected. The first viewer therefore starts the SIP monitor
+and encoder. Concurrent viewers share one upstream monitor, and the monitor
+stops after demand ends. Leave Generic Camera's **Preload stream** option
+disabled unless continuous monitoring is intentional.
 
 The first request returns a valid black placeholder while the SIP monitor
 dialog starts. Live 640x480 JPEG frames normally replace it after about two
 seconds. Frames are fetched twice per second, so the result looks more like a
 sequence of still images than smooth video. Concurrent Home Assistant requests
-share the same dialog. Leave **Preload stream** disabled unless the monitor
-should remain active continuously.
+share the same dialog. The RTSP stream is H.264 baseline at a constant 2 fps;
+it does not interpolate additional motion.
+
+The dedicated **MJPEG IP Camera** integration remains usable without RTSP.
+Configure its MJPEG and still-image URLs with the HTTP endpoints above.
 
 This version provides a video-only image monitor and an optional standard
 doorbell event entity, but it is not a complete Home Assistant intercom. It
@@ -218,15 +235,16 @@ been verified with real hardware;
 publishing incoming-ring frames to the live MJPEG source still requires
 end-to-end hardware validation.
 
-The URLs are intentionally bound to loopback and have no HTTP authentication.
-Do not expose port 18080 outside the Home Assistant host.
+The HTTP, RTSP, and go2rtc API listeners are intentionally bound to loopback
+and have no authentication. Do not expose ports 18080, 8554, or 1984 outside
+the Home Assistant host.
 
 ## How to build
 ```
 docker build \
   --build-arg BUILD_FROM=ghcr.io/home-assistant/aarch64-base:latest \
   --build-arg REPO_URL=https://github.com/ikob/AP_intercom_agent.git \
-  --build-arg REPO_REF=23fcb20ffd9dc2e19a5e64f6c1001bfbd9728341 \
+  --build-arg REPO_REF=931ae1cbdb75c3700073140bab93b12322acbb53 \
   -t ap_intercom_agent:dev .
 
 ```
