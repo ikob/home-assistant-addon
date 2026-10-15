@@ -201,11 +201,26 @@ Assistant after changing `configuration.yaml`.
 
 ### Camera
 
-The add-on serves both the agent's HTTP camera and an H.264 RTSP bridge:
+The add-on serves the agent's HTTP camera and an H.264 RTSP/WebRTC bridge:
 
 - Snapshot: `http://127.0.0.1:18080/v1/camera.jpg`
 - MJPEG: `http://127.0.0.1:18080/v1/camera.mjpeg`
 - H.264 RTSP: `rtsp://127.0.0.1:8554/intercom`
+
+For low-latency playback, install the **WebRTC Camera** custom integration,
+add its integration with the existing server URL
+`http://127.0.0.1:1984/`, and use this Lovelace card:
+
+```yaml
+type: custom:webrtc-camera
+url: intercom
+mode: webrtc
+```
+
+The go2rtc API remains on loopback. WebRTC media uses TCP and UDP port 8555,
+which must be reachable directly from the viewing device. The bundled go2rtc
+uses its default public STUN service; STUN assists connection setup and does not
+carry the video.
 
 For a normal Home Assistant stream, add the **Generic Camera** integration and
 configure:
@@ -234,14 +249,16 @@ Configure its MJPEG and still-image URLs with the HTTP endpoints above.
 
 This version provides a video-only image monitor and an optional standard
 doorbell event entity, but it is not a complete Home Assistant intercom. It
-does not expose audio, two-way talk, or native WebRTC. On-demand monitoring has
-been verified with real hardware;
+does not expose audio or two-way talk. On-demand monitoring has been verified
+with real hardware;
 publishing incoming-ring frames to the live MJPEG source still requires
 end-to-end hardware validation.
 
 The HTTP, RTSP, and go2rtc API listeners are intentionally bound to loopback
 and have no authentication. Do not expose ports 18080, 8554, or 1984 outside
-the Home Assistant host.
+the Home Assistant host. Port 8555 carries encrypted WebRTC media and is
+intentionally reachable from the LAN; restrict Internet exposure with your
+firewall unless remote WebRTC access is explicitly configured.
 
 ## How to build
 ```
