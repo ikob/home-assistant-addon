@@ -109,6 +109,10 @@ agent's two-frame-per-second MJPEG source to H.264 RTSP on demand for Home
 Assistant Generic Camera. Existing SIP, image-capture, webhook, and unlock
 settings are unchanged.
 
+Version 0.3.3 encodes every H.264 frame as an IDR frame. At 2 fps, a newly
+connected viewer can begin decoding at the next half-second frame instead of
+waiting for the next one-second GOP boundary.
+
 ## Home Assistant integration
 
 ### Doorbell event
@@ -223,7 +227,7 @@ dialog starts. Live 640x480 JPEG frames normally replace it after about two
 seconds. Frames are fetched twice per second, so the result looks more like a
 sequence of still images than smooth video. Concurrent Home Assistant requests
 share the same dialog. The RTSP stream is H.264 baseline at a constant 2 fps;
-it does not interpolate additional motion.
+every frame is an IDR frame and no additional motion is interpolated.
 
 The dedicated **MJPEG IP Camera** integration remains usable without RTSP.
 Configure its MJPEG and still-image URLs with the HTTP endpoints above.
@@ -244,7 +248,7 @@ the Home Assistant host.
 docker build \
   --build-arg BUILD_FROM=ghcr.io/home-assistant/aarch64-base:latest \
   --build-arg REPO_URL=https://github.com/ikob/AP_intercom_agent.git \
-  --build-arg REPO_REF=931ae1cbdb75c3700073140bab93b12322acbb53 \
+  --build-arg REPO_REF=7efe8b77d981ed25761817523409af851d658cfa \
   -t ap_intercom_agent:dev .
 
 ```

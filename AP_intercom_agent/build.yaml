@@ -2,6 +2,6 @@ build_from:
   aarch64: ghcr.io/home-assistant/aarch64-base:latest
 args:
   REPO_URL: "https://github.com/ikob/AP_intercom_agent.git"
-  REPO_REF: "931ae1cbdb75c3700073140bab93b12322acbb53"
+  REPO_REF: "7efe8b77d981ed25761817523409af851d658cfa"
   GO2RTC_VERSION: "1.9.14"
   GO2RTC_SHA256: "359fabade8a7a51e81a55fe6df6b0ef81764a5e1d63179577534eaaa71904b50"
