@@ -121,6 +121,11 @@ Microphone transmission remains unimplemented. Review `unlock_callers` before
 enabling automatic unlock; the new in-call unlock behavior has protocol tests
 but has not been exercised against a live lock.
 
+Version 0.4.1 stops automatically redialing an outgoing camera monitor after
+the IFBOX ends that dialog. It retains the latest frame and exposes camera
+state and manual-reconnect HTTP endpoints for a clearer Home Assistant UI. A
+new stream consumer can also start a fresh dialog.
+
 ## Home Assistant integration
 
 ### Doorbell event
@@ -234,6 +239,8 @@ The add-on serves the agent's HTTP camera and an H.264 RTSP bridge:
 - Snapshot: `http://127.0.0.1:18080/v1/camera.jpg`
 - MJPEG: `http://127.0.0.1:18080/v1/camera.mjpeg`
 - Received PCMU audio: `http://127.0.0.1:18080/v1/audio.pcmu`
+- State: `http://127.0.0.1:18080/v1/camera/state`
+- Reconnect: `POST http://127.0.0.1:18080/v1/camera/reconnect`
 - H.264/Opus RTSP: `rtsp://127.0.0.1:8554/intercom`
 
 Add the **Generic Camera** integration and configure:
@@ -244,14 +251,79 @@ Add the **Generic Camera** integration and configure:
 - Username and password: leave empty
 - Verify SSL: disabled
 
-Use the resulting camera entity in a standard live picture card:
+Add a REST sensor, friendly Template sensor, and reconnect command to
+`configuration.yaml`:
 
 ```yaml
-type: picture-entity
-entity: camera.aiphone_intercom
-camera_view: live
-show_name: false
-show_state: false
+sensor:
+  - platform: rest
+    name: "AIPHONE Camera State"
+    unique_id: aiphone_camera_state
+    resource: "http://127.0.0.1:18080/v1/camera/state"
+    scan_interval: 2
+    timeout: 2
+    value_template: "{{ value_json.state }}"
+    json_attributes:
+      - monitor_active
+      - demand_active
+      - consumer_count
+      - audio_consumer_count
+      - reconnect_available
+      - suspended
+
+rest_command:
+  aiphone_camera_reconnect:
+    url: "http://127.0.0.1:18080/v1/camera/reconnect"
+    method: POST
+    content_type: "application/json"
+
+template:
+  - sensor:
+      - name: "AIPHONE Camera Status"
+        unique_id: aiphone_camera_status
+        icon: mdi:doorbell-video
+        state: >-
+          {% set camera_state = states('sensor.aiphone_camera_state') %}
+          {{ {
+            'idle': '待機中',
+            'connecting': '接続中…',
+            'active': 'ライブ',
+            'ended_by_remote': 'モニター終了',
+            'suspended': '着信対応中'
+          }.get(camera_state, '利用不可') }}
+```
+
+If any of these top-level keys already exist, merge the new entry under the
+existing key. Do not create duplicate `sensor:`, `rest_command:`, or
+`template:` keys.
+
+Use the Generic Camera entity as the picture while the friendly sensor supplies
+the card name and state. The reconnect button appears only after the IFBOX has
+ended the monitor dialog:
+
+```yaml
+type: vertical-stack
+cards:
+  - type: picture-entity
+    entity: sensor.aiphone_camera_status
+    camera_image: camera.aiphone_intercom
+    camera_view: live
+    name: AIPHONE Intercom
+    show_name: true
+    show_state: true
+    fit_mode: cover
+  - type: conditional
+    conditions:
+      - condition: state
+        entity: sensor.aiphone_camera_state
+        state: ended_by_remote
+    card:
+      type: button
+      name: カメラを再接続
+      icon: mdi:refresh
+      tap_action:
+        action: perform-action
+        perform_action: rest_command.aiphone_camera_reconnect
 ```
 
 Home Assistant can relay this RTSP source through its standard go2rtc/WebRTC
@@ -275,6 +347,14 @@ Incoming JPEG polling continues until the call ends; `incoming_jpeg_hold`
 controls only how long the timestamped file is refreshed. If the IFBOX
 temporarily responds with `603 Decline` while releasing the call, monitor
 retries use a bounded backoff.
+
+When the IFBOX ends an outgoing monitor dialog, the latest JPEG remains
+visible but the same outstanding demand no longer redials automatically. The
+state becomes `ended_by_remote`. Opening a genuinely new MJPEG/audio consumer
+or pressing the reconnect button starts a new dialog. Because go2rtc can reuse
+one upstream connection for multiple Home Assistant viewers, the explicit
+button is the reliable reconnect path when reopening a card does not create a
+new HTTP consumer.
 
 The first request returns a valid black placeholder while the SIP monitor
 dialog starts. Live 640x480 JPEG frames normally replace it after about two
@@ -306,7 +386,7 @@ the Home Assistant host.
 docker build \
   --build-arg BUILD_FROM=ghcr.io/home-assistant/aarch64-base:latest \
   --build-arg REPO_URL=https://github.com/ikob/AP_intercom_agent.git \
-  --build-arg REPO_REF=0cf753487fe2b6c26110a4a1ad0fd5d6c298d3ff \
+  --build-arg REPO_REF=fc7b7165aefee5b11765b0d2a020f1c938eb1a2e \
   -t ap_intercom_agent:dev .
 
 ```
