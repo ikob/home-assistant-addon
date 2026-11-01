@@ -32,8 +32,11 @@ list and any legacy setting are empty.
 unlocked. An empty `unlock_callers` list disables automatic unlocking while
 still allowing configured callers and ring-image capture.
 
-For instructions on obtaining `jpeg_query_s`, see
-[`Finding jpeg_query_s`](https://github.com/ikob/AP_intercom_agent#finding-jpeg_query_s)
+The JPEG query parameter is generated from `username` using the official
+application's `MD5(username + "intercom")` rule. Normally `jpeg_query_s` should
+not be configured. It remains available as an optional compatibility override;
+see
+[`Overriding jpeg_query_s`](https://github.com/ikob/AP_intercom_agent#overriding-jpeg_query_s)
 in the AP Intercom Agent documentation.
 `incoming_jpeg_max_files` limits retained ring images and defaults to 100. The
 oldest image is removed when the limit is exceeded.
@@ -125,6 +128,11 @@ Version 0.4.1 stops automatically redialing an outgoing camera monitor after
 the IFBOX ends that dialog. It retains the latest frame and exposes camera
 state and manual-reconnect HTTP endpoints for a clearer Home Assistant UI. A
 new stream consumer can also start a fresh dialog.
+
+Version 0.4.2 derives the IFBOX JPEG query token from the configured SIP
+username. New installations no longer need a `jpeg_query_s` option; an
+existing or explicitly configured value remains available as a compatibility
+override.
 
 ## Home Assistant integration
 
@@ -405,7 +413,6 @@ docker run --rm --net=host \
   -e ENTRANCE_URI=sip:housing@<IP_ADDRESS>:5060 \
   -e ALLOWED_CALLERS=interphone0,interphone1 \
   -e UNLOCK_CALLERS=interphone0 \
-  -e JPEG_QUERY_S=cd188d8e518cb12ad7a644f23928f64f \
   -e INCOMING_JPEG_DIR=/media/ap_intercom_agent \
   -e INCOMING_JPEG_MAX_FILES=100 \
   -e ANSWER_CALLS=false \

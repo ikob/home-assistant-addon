@@ -14,7 +14,7 @@ ARG BUILD_VERSION
 RUN echo "Build version: ${BUILD_VERSION}"
 
 ARG REPO_URL=https://github.com/ikob/AP_intercom_agent.git
-ARG REPO_REF=fc7b7165aefee5b11765b0d2a020f1c938eb1a2e
+ARG REPO_REF=9af1cc6d845a0b4112ba5b0369c660983b05fa4c
 
 RUN git clone "${REPO_URL}" . \
  && git checkout --detach "${REPO_REF}" \

@@ -1,7 +1,7 @@
 name: "AP Intercom Agent"
 slug: ap_intercom_agent
 description: "Saves ring snapshots and provides an on-demand AIPHONE camera with received audio."
-version: "0.4.1"
+version: "0.4.2"
 arch:
   - aarch64
 url: "https://github.com/ikob/AP_intercom_agent"
@@ -25,7 +25,6 @@ options:
     - "interphone1"
   unlock_callers:
     - "interphone0"
-  jpeg_query_s: "cd188d8e518cb12ad7a644f23928f64f"
   incoming_jpeg_max_files: 100
   ring_webhook_url: ""
   answer_calls: false
@@ -45,7 +44,7 @@ schema:
     - "str(1,)"
   unlock_callers:
     - "str(1,)"
-  jpeg_query_s: "str(1,)"
+  jpeg_query_s: str?
   incoming_jpeg_max_files: "int(1,)"
   ring_webhook_url: password?
   answer_calls: bool

@@ -11,7 +11,10 @@ PROXY="$(bashio::config 'proxy')"
 REGISTER_URI="$(bashio::config 'register_uri')"
 MESSAGE_URI="$(bashio::config 'message_uri')"
 ENTRANCE_URI="$(bashio::config 'entrance_uri')"
-JPEG_QUERY_S="$(bashio::config 'jpeg_query_s')"
+JPEG_QUERY_S=""
+if bashio::config.has_value 'jpeg_query_s'; then
+  JPEG_QUERY_S="$(bashio::config 'jpeg_query_s')"
+fi
 INCOMING_JPEG_MAX_FILES="$(bashio::config 'incoming_jpeg_max_files')"
 INCOMING_JPEG_DIR="/media/ap_intercom_agent"
 
@@ -115,11 +118,16 @@ ARGS=(
   -reject-code 486
   -reject-reason "Busy Here"
   -log-level="${LOG_LEVEL}"
-  -jpeg-query-s "${JPEG_QUERY_S}"
   -incoming-jpeg-dir "${INCOMING_JPEG_DIR}"
   -incoming-jpeg-max-files "${INCOMING_JPEG_MAX_FILES}"
   -unlock-caller=
 )
+
+JPEG_QUERY_MODE="generated"
+if [[ -n "${JPEG_QUERY_S}" ]]; then
+  ARGS+=(-jpeg-query-s "${JPEG_QUERY_S}")
+  JPEG_QUERY_MODE="override"
+fi
 
 if (( ${#ALLOWED_CALLERS[@]} > 0 )); then
   for caller in "${ALLOWED_CALLERS[@]}"; do
@@ -145,6 +153,6 @@ if [[ -n "${RING_WEBHOOK_URL}" ]]; then
   RING_WEBHOOK_CONFIGURED="true"
 fi
 
-bashio::log.info "Starting intercom_agent (addon_version=${ADDON_VERSION:-unknown}, launcher=${LAUNCHER_REVISION}, user=${USERNAME}, proxy=${PROXY}, config_allowed_count=${CONFIG_ALLOWED_CALLER_COUNT}, config_unlock_count=${CONFIG_UNLOCK_CALLER_COUNT}, legacy_allowed=${LEGACY_ALLOWED_CALLER_PRESENT}, allowed=${ALLOWED_CALLERS_LOG}, unlock=${UNLOCK_CALLERS_LOG}, answer_calls=${ANSWER_CALLS}, capture_images=${CAPTURE_IMAGES}, send_messages=${SEND_MESSAGES}, ring_webhook_configured=${RING_WEBHOOK_CONFIGURED}, jpeg_dir=${INCOMING_JPEG_DIR}, jpeg_max_files=${INCOMING_JPEG_MAX_FILES}, log_level=${LOG_LEVEL}, expiry=${EXPIRY}, retry=${RETRY})"
+bashio::log.info "Starting intercom_agent (addon_version=${ADDON_VERSION:-unknown}, launcher=${LAUNCHER_REVISION}, user=${USERNAME}, proxy=${PROXY}, config_allowed_count=${CONFIG_ALLOWED_CALLER_COUNT}, config_unlock_count=${CONFIG_UNLOCK_CALLER_COUNT}, legacy_allowed=${LEGACY_ALLOWED_CALLER_PRESENT}, allowed=${ALLOWED_CALLERS_LOG}, unlock=${UNLOCK_CALLERS_LOG}, answer_calls=${ANSWER_CALLS}, capture_images=${CAPTURE_IMAGES}, send_messages=${SEND_MESSAGES}, ring_webhook_configured=${RING_WEBHOOK_CONFIGURED}, jpeg_query=${JPEG_QUERY_MODE}, jpeg_dir=${INCOMING_JPEG_DIR}, jpeg_max_files=${INCOMING_JPEG_MAX_FILES}, log_level=${LOG_LEVEL}, expiry=${EXPIRY}, retry=${RETRY})"
 
 exec /usr/local/bin/intercom_agent "${ARGS[@]}"

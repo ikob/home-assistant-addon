@@ -15,7 +15,7 @@ set -euo pipefail
 
 ALLOWED_CALLERS="${ALLOWED_CALLERS-interphone0,interphone1}"
 UNLOCK_CALLERS="${UNLOCK_CALLERS-interphone0}"
-JPEG_QUERY_S="${JPEG_QUERY_S:-cd188d8e518cb12ad7a644f23928f64f}"
+JPEG_QUERY_S="${JPEG_QUERY_S:-}"
 INCOMING_JPEG_DIR="${INCOMING_JPEG_DIR:-/media/ap_intercom_agent}"
 INCOMING_JPEG_MAX_FILES="${INCOMING_JPEG_MAX_FILES:-100}"
 
@@ -36,11 +36,14 @@ ARGS=(
   -send-messages="${SEND_MESSAGES}"
   -reject-code 486
   -reject-reason "Busy Here"
-  -jpeg-query-s "${JPEG_QUERY_S}"
   -incoming-jpeg-dir "${INCOMING_JPEG_DIR}"
   -incoming-jpeg-max-files "${INCOMING_JPEG_MAX_FILES}"
   -unlock-caller=
 )
+
+if [[ -n "${JPEG_QUERY_S}" ]]; then
+  ARGS+=(-jpeg-query-s "${JPEG_QUERY_S}")
+fi
 
 allowed_count=0
 if (( ${#allowed_callers[@]} > 0 )); then
