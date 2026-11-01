@@ -32,10 +32,9 @@ list and any legacy setting are empty.
 unlocked. An empty `unlock_callers` list disables automatic unlocking while
 still allowing configured callers and ring-image capture.
 
-The JPEG query parameter is generated from `username` using the official
-application's `MD5(username + "intercom")` rule. Normally `jpeg_query_s` should
-not be configured. It remains available as an optional compatibility override;
-see
+The JPEG query parameter is generated automatically from `username`. Normally
+`jpeg_query_s` should not be configured. It remains available as an optional
+compatibility override; see
 [`Overriding jpeg_query_s`](https://github.com/ikob/AP_intercom_agent#overriding-jpeg_query_s)
 in the AP Intercom Agent documentation.
 `incoming_jpeg_max_files` limits retained ring images and defaults to 100. The
