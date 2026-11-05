@@ -133,6 +133,12 @@ username. New installations no longer need a `jpeg_query_s` option; an
 existing or explicitly configured value remains available as a compatibility
 override.
 
+Version 0.5.0 adds the microphone backchannel used by Home Assistant 2026.11
+two-way audio. It bundles go2rtc 1.9.15, and the repository includes a small
+Home Assistant custom component that declares the camera's two-way-audio
+capability. Microphone RTP and audible output have been verified against a real
+IFBOX/intercom.
+
 ## Home Assistant integration
 
 ### Doorbell event
@@ -246,11 +252,32 @@ The add-on serves the agent's HTTP camera and an H.264 RTSP bridge:
 - Snapshot: `http://127.0.0.1:18080/v1/camera.jpg`
 - MJPEG: `http://127.0.0.1:18080/v1/camera.mjpeg`
 - Received PCMU audio: `http://127.0.0.1:18080/v1/audio.pcmu`
+- Talkback state: `http://127.0.0.1:18080/v1/talk`
+- PCMU microphone upload: `POST http://127.0.0.1:18080/v1/talk.pcmu`
 - State: `http://127.0.0.1:18080/v1/camera/state`
 - Reconnect: `POST http://127.0.0.1:18080/v1/camera/reconnect`
 - H.264/Opus RTSP: `rtsp://127.0.0.1:8554/intercom`
+- Two-way RTSP source: `rtsp://127.0.0.1:8554/intercom?backchannel=1`
 
-Add the **Generic Camera** integration and configure:
+For Home Assistant 2026.11, copy this repository's
+`custom_components/ap_intercom_agent` directory to
+`/config/custom_components/ap_intercom_agent`, restart Home Assistant, and add
+**AP Intercom Agent** from Settings > Devices & services. The default HTTP and
+RTSP URLs are correct for Home Assistant OS with this host-network add-on.
+
+Enable **Two-way audio** under Settings > System > Labs and connect to Home
+Assistant over HTTPS. The standard live camera then displays a talk button.
+Starting talk opens the microphone/RTSP backchannel; stopping talk gates it and
+the agent sends PCMU silence, matching the official app's PTT media behavior.
+Home Assistant 2026.11 presents this as a start/stop toggle, not a
+press-and-hold button.
+
+Browser microphone access requires HTTPS. The Home Assistant Cloud (Nabu Casa)
+URL works for this; a plain local URL such as
+`http://homeassistant.local:8123` does not. Use local HTTPS when talkback is
+needed without the cloud URL.
+
+Generic Camera remains available as a receive-only fallback. Configure:
 
 - Still Image URL: `http://127.0.0.1:18080/v1/camera.jpg`
 - Stream Source URL: `rtsp://127.0.0.1:8554/intercom`
@@ -304,7 +331,8 @@ If any of these top-level keys already exist, merge the new entry under the
 existing key. Do not create duplicate `sensor:`, `rest_command:`, or
 `template:` keys.
 
-Use the Generic Camera entity as the picture while the friendly sensor supplies
+Use the AP Intercom Agent camera entity (or the receive-only Generic Camera
+fallback) as the picture while the friendly sensor supplies
 the card name and state. The reconnect button appears only after the IFBOX has
 ended the monitor dialog:
 
@@ -341,11 +369,12 @@ is not required.
 
 The bundled go2rtc and FFmpeg processes convert HTTP MJPEG to H.264 and
 received SIP/RTP PCMU to Opus only while an RTSP viewer is connected. The audio
-connection asks IFBOX to enter talking mode once per monitor dialog, but it
-does not transmit microphone audio. The first viewer therefore starts the SIP
-monitor and encoders. Concurrent viewers share one upstream monitor, and the
-monitor stops after demand ends. Leave Generic Camera's **Preload stream**
-option disabled unless continuous monitoring is intentional.
+connection asks IFBOX to enter talking mode once per monitor dialog. go2rtc's
+backchannel supplies PCMA microphone frames to FFmpeg, which converts them to
+PCMU and uploads them to the agent for SIP/RTP packetization. The first viewer
+therefore starts the SIP monitor and encoders. Concurrent viewers share one
+upstream monitor, and the monitor stops after demand ends. Leave stream preload
+disabled unless continuous monitoring is intentional.
 
 An incoming ring has priority over an active outgoing monitor. The add-on
 stops the monitor SIP dialog, uses incoming JPEG frames for the same camera,
@@ -375,14 +404,17 @@ no additional motion is interpolated.
 The dedicated **MJPEG IP Camera** integration remains usable without RTSP.
 Configure its MJPEG and still-image URLs with the HTTP endpoints above.
 
-This version provides video, received intercom audio, an optional standard
-doorbell event entity, and manual call signaling, but it is not a complete Home
-Assistant intercom. Microphone transmission/two-way talk is not implemented.
+This version provides video, received intercom audio, microphone talkback, an
+optional standard doorbell event entity, and manual call signaling. Talkback
+selects the active monitor or answered incoming SIP dialog and maintains RTP
+continuity with 20 ms PCMU silence when the microphone is gated.
 On-demand monitoring and publishing incoming-ring frames to the live MJPEG
 source have been verified with real hardware. The receive-audio path has also
 been verified through authenticated `TALKING CONNECT`, received PCMU RTP, and
 the combined H.264/Opus RTSP output. Audio playback through the Home Assistant
-client has been verified as well.
+client has been verified as well. The microphone path has also been verified
+on real hardware from the Home Assistant talk control through the RTSP
+backchannel and SIP/RTP output to audible sound at the intercom.
 
 The HTTP, RTSP, and go2rtc API listeners are intentionally bound to loopback
 and have no authentication. Do not expose ports 18080, 8554, or 1984 outside
@@ -393,7 +425,7 @@ the Home Assistant host.
 docker build \
   --build-arg BUILD_FROM=ghcr.io/home-assistant/aarch64-base:latest \
   --build-arg REPO_URL=https://github.com/ikob/AP_intercom_agent.git \
-  --build-arg REPO_REF=fc7b7165aefee5b11765b0d2a020f1c938eb1a2e \
+  --build-arg REPO_REF=25c9c05e184bee3f2fbbbcc5f7a647b096c5d44e \
   -t ap_intercom_agent:dev .
 
 ```

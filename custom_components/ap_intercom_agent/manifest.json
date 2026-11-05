@@ -1,0 +1,11 @@
+{
+  "domain": "ap_intercom_agent",
+  "name": "AP Intercom Agent",
+  "codeowners": ["@ikob"],
+  "config_flow": true,
+  "documentation": "https://github.com/ikob/AP_intercom_agent",
+  "integration_type": "device",
+  "iot_class": "local_push",
+  "requirements": [],
+  "version": "0.1.0"
+}

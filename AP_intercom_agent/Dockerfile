@@ -14,7 +14,7 @@ ARG BUILD_VERSION
 RUN echo "Build version: ${BUILD_VERSION}"
 
 ARG REPO_URL=https://github.com/ikob/AP_intercom_agent.git
-ARG REPO_REF=9af1cc6d845a0b4112ba5b0369c660983b05fa4c
+ARG REPO_REF=25c9c05e184bee3f2fbbbcc5f7a647b096c5d44e
 
 RUN git clone "${REPO_URL}" . \
  && git checkout --detach "${REPO_REF}" \
@@ -23,8 +23,8 @@ RUN go mod download
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 \
     go build -trimpath -ldflags="-s -w" -o /out/intercom_agent .
 
-ARG GO2RTC_VERSION=1.9.14
-ARG GO2RTC_SHA256=359fabade8a7a51e81a55fe6df6b0ef81764a5e1d63179577534eaaa71904b50
+ARG GO2RTC_VERSION=1.9.15
+ARG GO2RTC_SHA256=af416f22b21a24ab83b8d78642190b4932ae695b4e386853f11d1b0319781763
 RUN wget -qO /out/go2rtc \
       "https://github.com/AlexxIT/go2rtc/releases/download/v${GO2RTC_VERSION}/go2rtc_linux_arm64" \
  && echo "${GO2RTC_SHA256}  /out/go2rtc" | sha256sum -c - \

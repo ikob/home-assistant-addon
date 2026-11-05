@@ -1,0 +1,20 @@
+{
+  "config": {
+    "abort": {
+      "already_configured": "AP Intercom Agent is already configured."
+    },
+    "error": {
+      "invalid_url": "Enter a valid absolute URL."
+    },
+    "step": {
+      "user": {
+        "data": {
+          "agent_url": "Agent HTTP URL",
+          "name": "Name",
+          "rtsp_url": "RTSP stream URL"
+        },
+        "description": "Connect Home Assistant to the local AP Intercom Agent add-on. The RTSP backchannel parameter is added automatically."
+      }
+    }
+  }
+}
